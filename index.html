@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Task Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .task-item {
+            transition: all 0.3s ease;
+        }
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .priority-high {
+            border-left: 4px solid #ef4444;
+        }
+        .priority-medium {
+            border-left: 4px solid #f59e0b;
+        }
+        .priority-low {
+            border-left: 4px solid #10b981;
+        }
+        .overdue {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+        }
+        .due-soon {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #667eea 50%, #764ba2 75%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            position: relative;
+        }
+        
+        .gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen py-8">
+    <!-- Notification -->
+    <div id="notification" class="notification bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <div class="flex items-center gap-2">
+            <span id="notificationIcon">✅</span>
+            <span id="notificationText">Data saved successfully!</span>
+        </div>
+    </div>
+
+    <!-- Landing Page -->
+    <div id="landingPage" class="max-w-6xl mx-auto px-4">
+        <!-- Hero Section -->
+        <div class="text-center mb-16">
+            <div class="text-8xl mb-6">🎓</div>
+            <h1 class="text-6xl font-bold text-white mb-6 leading-tight">Academic Task Manager</h1>
+            <p class="text-2xl text-white/90 mb-8 max-w-3xl mx-auto">Your ultimate companion for managing exams, assignments, and study goals with smart features that keep you motivated and organized!</p>
+            <button onclick="showMainApp()" class="bg-white text-purple-600 px-12 py-4 rounded-2xl text-xl font-bold hover:bg-white/90 transition-all duration-300 transform hover:scale-105 shadow-2xl">
+                🚀 Get Started Now
+            </button>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <!-- Feature 1 -->
+            <div class="glass-effect rounded-2xl p-8 text-center transform hover:scale-105 transition-all duration-300">
+                <div class="text-5xl mb-4">💾</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Auto-Save Everything</h3>
+                <p class="text-gray-600 leading-relaxed">Never lose your progress! Every task, study hour, and completion is automatically saved to your browser. Your data persists even after closing the app.</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="glass-effect rounded-2xl p-8 text-center transform hover:scale-105 transition-all duration-300">
+                <div class="text-5xl mb-4">🎯</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Smart Study Tracking</h3>
+                <p class="text-gray-600 leading-relaxed">Set study hour goals and track your progress. Tasks automatically complete when you reach 100% of your study target!</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="glass-effect rounded-2xl p-8 text-center transform hover:scale-105 transition-all duration-300">
+                <div class="text-5xl mb-4">💡</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Daily Motivation</h3>
+                <p class="text-gray-600 leading-relaxed">Stay inspired with rotating motivational quotes from successful leaders and thinkers. New quotes appear every 30 seconds!</p>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="glass-effect rounded-2xl p-8 text-center transform hover:scale-105 transition-all duration-300">
+                <div class="text-5xl mb-4">📊</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Visual Progress</h3>
+                <p class="text-gray-600 leading-relaxed">Beautiful progress bars, priority indicators, and due date warnings help you stay on track with color-coded visual feedback.</p>
+            </div>
+
+            <!-- Feature 5 -->
+            <div class="glass-effect rounded-2xl p-8 text-center transform hover:scale-105 transition-all duration-300">
+                <div class="text-5xl mb-4">📤</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Backup & Share</h3>
+                <p class="text-gray-600 leading-relaxed">Export your tasks as JSON files for backup or sharing. Import data from previous exports to restore your progress anytime.</p>
+            </div>
+
+            <!-- Feature 6 -->
+            <div class="glass-effect rounded-2xl p-8 text-center transform hover:scale-105 transition-all duration-300">
+                <div class="text-5xl mb-4">🔔</div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Smart Alerts</h3>
+                <p class="text-gray-600 leading-relaxed">Get visual notifications for overdue tasks, approaching deadlines, and automatic completions. Never miss an important deadline!</p>
+            </div>
+        </div>
+
+        <!-- Task Types Section -->
+        <div class="glass-effect rounded-2xl p-12 mb-16 text-center">
+            <h2 class="text-4xl font-bold text-gray-800 mb-8">Perfect for All Academic Tasks</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+                <div class="text-center">
+                    <div class="text-4xl mb-2">📝</div>
+                    <div class="font-semibold text-gray-700">Exams</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">🎤</div>
+                    <div class="font-semibold text-gray-700">Vivas</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">📋</div>
+                    <div class="font-semibold text-gray-700">Assignments</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">🚀</div>
+                    <div class="font-semibold text-gray-700">Projects</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl mb-2">📌</div>
+                    <div class="font-semibold text-gray-700">Other Tasks</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Preview -->
+        <div class="glass-effect rounded-2xl p-12 mb-16">
+            <h2 class="text-4xl font-bold text-gray-800 mb-8 text-center">Track Your Academic Success</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-600">∞</div>
+                    <div class="text-sm text-gray-600">Total Tasks</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600">✓</div>
+                    <div class="text-sm text-gray-600">Completed</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-orange-600">⏳</div>
+                    <div class="text-sm text-gray-600">Pending</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-red-600">⚠️</div>
+                    <div class="text-sm text-gray-600">Overdue</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-600">📈</div>
+                    <div class="text-sm text-gray-600">Study Progress</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-indigo-600">⏰</div>
+                    <div class="text-sm text-gray-600">Hours Studied</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-white mb-6">Ready to Ace Your Academics?</h2>
+            <p class="text-xl text-white/80 mb-8 max-w-2xl mx-auto">Join thousands of students who have transformed their study habits with our smart task management system.</p>
+            <button onclick="showMainApp()" class="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white px-16 py-5 rounded-2xl text-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-2xl">
+                🎯 Start Managing Tasks Now
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-white/60 pb-8">
+            <p>✨ Free • No Registration Required • Works Offline ✨</p>
+        </div>
+    </div>
+
+    <!-- Main App (Hidden Initially) -->
+    <div id="mainApp" class="max-w-4xl mx-auto px-4" style="display: none;">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center gap-4 mb-4">
+                <button onclick="showLandingPage()" class="text-white/70 hover:text-white transition-colors duration-200 text-sm">
+                    ← Back to Home
+                </button>
+                <h1 class="text-5xl font-bold text-white">📚 Academic Task Manager</h1>
+            </div>
+            <p class="text-white/80 text-lg">Keep track of your exams, vivas, and assignments</p>
+            
+            <!-- Motivational Quote -->
+            <div class="mt-6 bg-white/10 backdrop-blur-sm rounded-2xl p-6 max-w-2xl mx-auto">
+                <div class="text-2xl mb-2">💡</div>
+                <blockquote id="motivationalQuote" class="text-white/90 text-lg font-medium italic mb-2">
+                    "Success is the sum of small efforts repeated day in and day out."
+                </blockquote>
+                <cite id="quoteAuthor" class="text-white/70 text-sm">- Robert Collier</cite>
+                <button onclick="changeQuote()" class="ml-4 text-white/60 hover:text-white/90 transition-colors duration-200 text-sm">
+                    🔄 New Quote
+                </button>
+            </div>
+            <div class="mt-4 flex justify-center gap-4">
+                <button onclick="exportData()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                    📤 Export Data
+                </button>
+                <button onclick="document.getElementById('importFile').click()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200">
+                    📥 Import Data
+                </button>
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)" class="hidden">
+            </div>
+        </div>
+
+        <!-- Data Status -->
+        <div class="glass-effect rounded-xl shadow-lg p-4 mb-6 text-center">
+            <div class="flex items-center justify-center gap-2 text-sm text-gray-600">
+                <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                <span>Auto-save enabled - Your data is automatically saved to this browser</span>
+                <span id="lastSaved" class="text-xs text-gray-500"></span>
+            </div>
+        </div>
+
+        <!-- Add Task Form -->
+        <div class="glass-effect rounded-2xl shadow-2xl p-8 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Add New Task</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Task Description</label>
+                    <input 
+                        type="text" 
+                        id="taskInput" 
+                        placeholder="e.g., Physics Final Exam" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-700"
+                        onkeypress="handleKeyPress(event)"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                    <input 
+                        type="text" 
+                        id="taskSubject" 
+                        placeholder="e.g., Physics, Mathematics" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-700"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                    <select id="taskType" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-700">
+                        <option value="exam">📝 Exam</option>
+                        <option value="viva">🎤 Viva</option>
+                        <option value="assignment">📋 Assignment</option>
+                        <option value="project">🚀 Project</option>
+                        <option value="other">📌 Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
+                    <input 
+                        type="date" 
+                        id="taskDate" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-700"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Study Goal (hours)</label>
+                    <input 
+                        type="number" 
+                        id="studyGoal" 
+                        placeholder="e.g., 10" 
+                        min="0" 
+                        step="0.5"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-700"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                    <select id="taskPriority" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-700">
+                        <option value="high">🔴 High</option>
+                        <option value="medium">🟡 Medium</option>
+                        <option value="low">🟢 Low</option>
+                    </select>
+                </div>
+            </div>
+            <button 
+                onclick="addTask()" 
+                class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+                ✨ Add Task
+            </button>
+        </div>
+
+        <!-- Task Statistics -->
+        <div class="glass-effect rounded-2xl shadow-2xl p-6 mb-8">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-600" id="totalTasks">0</div>
+                    <div class="text-sm text-gray-600">Total Tasks</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600" id="completedTasks">0</div>
+                    <div class="text-sm text-gray-600">Completed</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-orange-600" id="pendingTasks">0</div>
+                    <div class="text-sm text-gray-600">Pending</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-red-600" id="overdueTasks">0</div>
+                    <div class="text-sm text-gray-600">Overdue</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-600" id="studyProgress">0%</div>
+                    <div class="text-sm text-gray-600">Study Progress</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-indigo-600" id="totalStudyHours">0h</div>
+                    <div class="text-sm text-gray-600">Hours Studied</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="glass-effect rounded-2xl shadow-2xl p-6 mb-8">
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button onclick="filterTasks('all')" class="filter-btn bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-200 ring-2 ring-white">All Tasks</button>
+                <button onclick="filterTasks('exam')" class="filter-btn bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-200">📝 Exams</button>
+                <button onclick="filterTasks('viva')" class="filter-btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-200">🎤 Vivas</button>
+                <button onclick="filterTasks('assignment')" class="filter-btn bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-200">📋 Assignments</button>
+                <button onclick="filterTasks('completed')" class="filter-btn bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-full font-medium transition-all duration-200">✅ Completed</button>
+            </div>
+        </div>
+
+        <!-- Tasks List -->
+        <div class="glass-effect rounded-2xl shadow-2xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800">Your Tasks</h2>
+                <button onclick="clearAllData()" class="text-red-500 hover:text-red-700 text-sm font-medium transition-colors duration-200">
+                    🗑️ Clear All Data
+                </button>
+            </div>
+            <div id="tasksList" class="space-y-4">
+                <!-- Tasks will be added here dynamically -->
+            </div>
+            <div id="emptyState" class="text-center py-16 text-gray-500">
+                <div class="text-8xl mb-6">🎯</div>
+                <p class="text-2xl font-semibold mb-2">No tasks yet!</p>
+                <p class="text-lg">Add your first academic task above to get started.</p>
+            </div>
+        </div>
+
+        <!-- Clear Completed Button -->
+        <div class="text-center mt-8">
+            <button 
+                onclick="clearCompleted()" 
+                id="clearButton"
+                class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hidden"
+            >
+                🗑️ Clear Completed Tasks
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let taskIdCounter = 1;
+        let currentFilter = 'all';
+
+        const typeEmojis = {
+            exam: '📝',
+            viva: '🎤',
+            assignment: '📋',
+            project: '🚀',
+            other: '📌'
+        };
+
+        const motivationalQuotes = [
+            { quote: "Success is the sum of small efforts repeated day in and day out.", author: "Robert Collier" },
+            { quote: "The expert in anything was once a beginner.", author: "Helen Hayes" },
+            { quote: "Education is the most powerful weapon which you can use to change the world.", author: "Nelson Mandela" },
+            { quote: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" },
+            { quote: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+            { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+            { quote: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+            { quote: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+            { quote: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+            { quote: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+            { quote: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
+            { quote: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs" },
+            { quote: "Your limitation—it's only your imagination.", author: "Unknown" },
+            { quote: "Push yourself, because no one else is going to do it for you.", author: "Unknown" },
+            { quote: "Great things never come from comfort zones.", author: "Unknown" },
+            { quote: "Dream it. Wish it. Do it.", author: "Unknown" },
+            { quote: "Success doesn't just find you. You have to go out and get it.", author: "Unknown" },
+            { quote: "The harder you work for something, the greater you'll feel when you achieve it.", author: "Unknown" },
+            { quote: "Dream bigger. Do bigger.", author: "Unknown" },
+            { quote: "Don't stop when you're tired. Stop when you're done.", author: "Unknown" }
+        ];
+
+        let currentQuoteIndex = 0;
+
+        // Local Storage Functions
+        function saveToLocalStorage() {
+            const data = {
+                tasks: tasks,
+                taskIdCounter: taskIdCounter,
+                lastSaved: new Date().toISOString()
+            };
+            localStorage.setItem('academicTaskManager', JSON.stringify(data));
+            updateLastSavedTime();
+            showNotification('💾 Data saved automatically!', 'success');
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('academicTaskManager');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    tasks = data.tasks || [];
+                    taskIdCounter = data.taskIdCounter || 1;
+                    updateLastSavedTime(data.lastSaved);
+                    showNotification('📂 Previous data loaded successfully!', 'info');
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
+                    showNotification('⚠️ Error loading saved data', 'error');
+                }
+            }
+        }
+
+        function updateLastSavedTime(timestamp) {
+            const lastSavedElement = document.getElementById('lastSaved');
+            if (timestamp) {
+                const date = new Date(timestamp);
+                lastSavedElement.textContent = `(Last saved: ${date.toLocaleString()})`;
+            } else {
+                lastSavedElement.textContent = `(Last saved: ${new Date().toLocaleString()})`;
+            }
+        }
+
+        function changeQuote() {
+            currentQuoteIndex = (currentQuoteIndex + 1) % motivationalQuotes.length;
+            const quote = motivationalQuotes[currentQuoteIndex];
+            document.getElementById('motivationalQuote').textContent = `"${quote.quote}"`;
+            document.getElementById('quoteAuthor').textContent = `- ${quote.author}`;
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            const text = document.getElementById('notificationText');
+            
+            // Set icon and color based on type
+            switch(type) {
+                case 'success':
+                    notification.className = 'notification bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg';
+                    icon.textContent = '✅';
+                    break;
+                case 'error':
+                    notification.className = 'notification bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg';
+                    icon.textContent = '❌';
+                    break;
+                case 'info':
+                    notification.className = 'notification bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg';
+                    icon.textContent = 'ℹ️';
+                    break;
+            }
+            
+            text.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Export/Import Functions
+        function exportData() {
+            const data = {
+                tasks: tasks,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `academic-tasks-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('📤 Data exported successfully!', 'success');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.tasks && Array.isArray(data.tasks)) {
+                        tasks = data.tasks;
+                        // Update task ID counter to avoid conflicts
+                        taskIdCounter = Math.max(...tasks.map(t => t.id), 0) + 1;
+                        saveToLocalStorage();
+                        renderTasks();
+                        updateStats();
+                        showNotification('📥 Data imported successfully!', 'success');
+                    } else {
+                        throw new Error('Invalid file format');
+                    }
+                } catch (error) {
+                    showNotification('❌ Error importing data. Please check file format.', 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+
+        function clearAllData() {
+            if (tasks.length === 0) {
+                showNotification('ℹ️ No data to clear', 'info');
+                return;
+            }
+            
+            // Create a custom confirmation dialog
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            confirmDialog.innerHTML = `
+                <div class="bg-white rounded-xl p-8 max-w-md mx-4 shadow-2xl">
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">⚠️</div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Clear All Data?</h3>
+                        <p class="text-gray-600 mb-6">This will permanently delete all your tasks and cannot be undone. Consider exporting your data first.</p>
+                        <div class="flex gap-3 justify-center">
+                            <button onclick="this.closest('.fixed').remove()" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-medium transition-colors duration-200">
+                                Cancel
+                            </button>
+                            <button onclick="confirmClearAll(); this.closest('.fixed').remove()" class="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors duration-200">
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmDialog);
+        }
+
+        function confirmClearAll() {
+            tasks = [];
+            taskIdCounter = 1;
+            localStorage.removeItem('academicTaskManager');
+            renderTasks();
+            updateStats();
+            showNotification('🗑️ All data cleared successfully!', 'info');
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const taskSubject = document.getElementById('taskSubject');
+            const taskType = document.getElementById('taskType');
+            const taskDate = document.getElementById('taskDate');
+            const studyGoal = document.getElementById('studyGoal');
+            const taskPriority = document.getElementById('taskPriority');
+            
+            const taskText = taskInput.value.trim();
+            
+            if (taskText === '') {
+                showNotification('⚠️ Please enter a task description', 'error');
+                return;
+            }
+
+            const newTask = {
+                id: taskIdCounter++,
+                text: taskText,
+                subject: taskSubject.value.trim() || 'General',
+                type: taskType.value,
+                date: taskDate.value,
+                studyGoal: parseFloat(studyGoal.value) || 0,
+                studyActual: 0,
+                priority: taskPriority.value,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+
+            tasks.push(newTask);
+            
+            // Clear form
+            taskInput.value = '';
+            taskSubject.value = '';
+            taskDate.value = '';
+            studyGoal.value = '';
+            
+            saveToLocalStorage();
+            renderTasks();
+            updateStats();
+        }
+
+        function toggleTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                saveToLocalStorage();
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        function deleteTask(taskId) {
+            tasks = tasks.filter(t => t.id !== taskId);
+            saveToLocalStorage();
+            renderTasks();
+            updateStats();
+        }
+
+        function updateStudyTime(taskId, hours) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                const oldActual = task.studyActual;
+                task.studyActual = Math.max(0, parseFloat(hours) || 0);
+                
+                // Auto-complete task if study goal is reached
+                if (task.studyGoal > 0 && task.studyActual >= task.studyGoal && !task.completed) {
+                    task.completed = true;
+                    showNotification(`🎉 Congratulations! "${task.text}" completed automatically!`, 'success');
+                }
+                
+                saveToLocalStorage();
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        function getStudyProgress(task) {
+            if (task.studyGoal === 0) return { percentage: 0, status: 'no-goal' };
+            
+            const percentage = Math.min(100, (task.studyActual / task.studyGoal) * 100);
+            let status = 'on-track';
+            
+            if (percentage >= 100) status = 'completed';
+            else if (percentage >= 75) status = 'almost-done';
+            else if (percentage >= 50) status = 'halfway';
+            else if (percentage >= 25) status = 'started';
+            else if (percentage > 0) status = 'just-started';
+            else status = 'not-started';
+            
+            return { percentage, status };
+        }
+
+        function getDaysUntilDue(dateString) {
+            if (!dateString) return null;
+            const dueDate = new Date(dateString);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            dueDate.setHours(0, 0, 0, 0);
+            return Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+        }
+
+        function getTaskStatusClass(task) {
+            if (task.completed) return '';
+            
+            const daysUntil = getDaysUntilDue(task.date);
+            if (daysUntil === null) return '';
+            
+            if (daysUntil < 0) return 'overdue';
+            if (daysUntil <= 3) return 'due-soon';
+            return '';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'No date set';
+            const date = new Date(dateString);
+            const options = { 
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        function getDueDateInfo(task) {
+            if (!task.date) return { text: 'No date', class: 'text-gray-500' };
+            
+            const daysUntil = getDaysUntilDue(task.date);
+            
+            if (task.completed) {
+                return { text: formatDate(task.date), class: 'text-gray-500' };
+            }
+            
+            if (daysUntil < 0) {
+                return { text: `${Math.abs(daysUntil)} days overdue`, class: 'text-red-600 font-semibold' };
+            } else if (daysUntil === 0) {
+                return { text: 'Due today!', class: 'text-red-600 font-semibold animate-pulse' };
+            } else if (daysUntil === 1) {
+                return { text: 'Due tomorrow', class: 'text-orange-600 font-semibold' };
+            } else if (daysUntil <= 3) {
+                return { text: `Due in ${daysUntil} days`, class: 'text-orange-600' };
+            } else if (daysUntil <= 7) {
+                return { text: `Due in ${daysUntil} days`, class: 'text-yellow-600' };
+            } else {
+                return { text: formatDate(task.date), class: 'text-gray-600' };
+            }
+        }
+
+        function filterTasks(filter) {
+            currentFilter = filter;
+            
+            // Update active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-white');
+            });
+            event.target.classList.add('ring-2', 'ring-white');
+            
+            renderTasks();
+        }
+
+        function getFilteredTasks() {
+            switch(currentFilter) {
+                case 'completed':
+                    return tasks.filter(t => t.completed);
+                case 'all':
+                    return tasks;
+                default:
+                    return tasks.filter(t => t.type === currentFilter);
+            }
+        }
+
+        function renderTasks() {
+            const tasksList = document.getElementById('tasksList');
+            const emptyState = document.getElementById('emptyState');
+            
+            const filteredTasks = getFilteredTasks();
+            
+            if (filteredTasks.length === 0) {
+                tasksList.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            
+            // Sort tasks: incomplete first, then by date, then by priority
+            const sortedTasks = filteredTasks.sort((a, b) => {
+                if (a.completed !== b.completed) {
+                    return a.completed - b.completed;
+                }
+                
+                if (a.date && b.date) {
+                    return new Date(a.date) - new Date(b.date);
+                }
+                
+                const priorityOrder = { high: 0, medium: 1, low: 2 };
+                return priorityOrder[a.priority] - priorityOrder[b.priority];
+            });
+            
+            tasksList.innerHTML = sortedTasks.map(task => {
+                const dueDateInfo = getDueDateInfo(task);
+                const statusClass = getTaskStatusClass(task);
+                const studyProgress = getStudyProgress(task);
+                
+                return `
+                    <div class="task-item ${statusClass} priority-${task.priority} bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                        <div class="flex items-start gap-4">
+                            <input 
+                                type="checkbox" 
+                                ${task.completed ? 'checked' : ''} 
+                                onchange="toggleTask(${task.id})"
+                                class="w-6 h-6 text-purple-600 rounded-lg focus:ring-purple-500 mt-1"
+                            >
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <span class="text-2xl">${typeEmojis[task.type]}</span>
+                                    <div class="flex-1">
+                                        <span class="text-lg font-semibold text-gray-800 ${task.completed ? 'completed' : ''}">${task.text}</span>
+                                        <div class="text-sm text-purple-600 font-medium">📚 ${task.subject}</div>
+                                    </div>
+                                    <span class="px-3 py-1 text-xs font-medium rounded-full ${
+                                        task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                        'bg-green-100 text-green-800'
+                                    }">${task.priority.toUpperCase()}</span>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                    <div class="flex items-center gap-4 text-sm">
+                                        <span class="capitalize text-gray-600">${task.type}</span>
+                                        <span class="${dueDateInfo.class}">${dueDateInfo.text}</span>
+                                    </div>
+                                    
+                                    ${task.studyGoal > 0 ? `
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-sm text-gray-600">Study:</span>
+                                        <input 
+                                            type="number" 
+                                            value="${task.studyActual}" 
+                                            onchange="updateStudyTime(${task.id}, this.value)"
+                                            min="0" 
+                                            step="0.5"
+                                            class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                        >
+                                        <span class="text-sm text-gray-600">/ ${task.studyGoal}h</span>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                                
+                                ${task.studyGoal > 0 ? `
+                                <div class="mb-2">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs text-gray-600">Study Progress</span>
+                                        <span class="text-xs font-medium ${
+                                            studyProgress.percentage >= 100 ? 'text-green-600' :
+                                            studyProgress.percentage >= 75 ? 'text-blue-600' :
+                                            studyProgress.percentage >= 50 ? 'text-yellow-600' :
+                                            'text-gray-600'
+                                        }">${studyProgress.percentage.toFixed(0)}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="h-2 rounded-full transition-all duration-300 ${
+                                            studyProgress.percentage >= 100 ? 'bg-green-500' :
+                                            studyProgress.percentage >= 75 ? 'bg-blue-500' :
+                                            studyProgress.percentage >= 50 ? 'bg-yellow-500' :
+                                            studyProgress.percentage >= 25 ? 'bg-orange-500' :
+                                            'bg-red-500'
+                                        }" style="width: ${Math.min(100, studyProgress.percentage)}%"></div>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <button 
+                                onclick="deleteTask(${task.id})" 
+                                class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-all duration-200"
+                                title="Delete task"
+                            >
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const pending = total - completed;
+            const overdue = tasks.filter(t => {
+                if (t.completed || !t.date) return false;
+                return getDaysUntilDue(t.date) < 0;
+            }).length;
+
+            // Calculate study statistics
+            const totalStudyGoal = tasks.reduce((sum, task) => sum + task.studyGoal, 0);
+            const totalStudyActual = tasks.reduce((sum, task) => sum + task.studyActual, 0);
+            const studyProgress = totalStudyGoal > 0 ? (totalStudyActual / totalStudyGoal * 100) : 0;
+
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('pendingTasks').textContent = pending;
+            document.getElementById('overdueTasks').textContent = overdue;
+            document.getElementById('studyProgress').textContent = `${studyProgress.toFixed(0)}%`;
+            document.getElementById('totalStudyHours').textContent = `${totalStudyActual.toFixed(1)}h`;
+
+            // Show/hide clear completed button
+            const clearButton = document.getElementById('clearButton');
+            if (completed > 0) {
+                clearButton.classList.remove('hidden');
+            } else {
+                clearButton.classList.add('hidden');
+            }
+        }
+
+        function clearCompleted() {
+            const completedCount = tasks.filter(t => t.completed).length;
+            if (completedCount === 0) {
+                showNotification('ℹ️ No completed tasks to clear', 'info');
+                return;
+            }
+            
+            tasks = tasks.filter(t => !t.completed);
+            saveToLocalStorage();
+            renderTasks();
+            updateStats();
+            showNotification(`🗑️ Cleared ${completedCount} completed task${completedCount > 1 ? 's' : ''}`, 'success');
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                addTask();
+            }
+        }
+
+        // Navigation Functions
+        function showMainApp() {
+            document.getElementById('landingPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            
+            // Set default date to today if not already set
+            if (!document.getElementById('taskDate').value) {
+                document.getElementById('taskDate').valueAsDate = new Date();
+            }
+            
+            // Load saved data and render
+            loadFromLocalStorage();
+            renderTasks();
+            updateStats();
+        }
+
+        function showLandingPage() {
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('landingPage').style.display = 'block';
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show landing page by default
+            showLandingPage();
+            
+            // Auto-rotate quotes every 30 seconds
+            setInterval(changeQuote, 30000);
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9908b3bb0685a735',t:'MTc2MDc5NzQ5Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
